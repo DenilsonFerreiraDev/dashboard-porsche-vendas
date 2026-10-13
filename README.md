@@ -2,8 +2,7 @@
 
 Dashboard interativa em HTML construída a partir de uma planilha de 100 vendas da Porsche, como desafio do bootcamp da DIO. Os dados ficam embutidos no próprio `index.html`, e os filtros atualizam todos os gráficos.
 
-**Dashboard publicada:** [PREENCHER: https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/](https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/)
-
+**Dashboard publicada:** https://github.com/DenilsonFerreiraDev/dashboard-porsche-vendas
 ## Resultado
 
 ![Dashboard completa](prints/dashboard.png)
