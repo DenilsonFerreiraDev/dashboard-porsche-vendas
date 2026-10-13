@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard de Vendas Porsche</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B1020;--card:#131A2E;--line:#222C48;--tx:#E6EAF5;--mu:#8A94B2;--cy:#22D3EE;--vi:#8B5CF6;--gr:#34D399;--am:#FBBF24;--ro:#FB7185}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1000px 500px at 80% -10%,#1b1550 0,transparent 60%),var(--bg);color:var(--tx);font-family:'Space Grotesk',Inter,system-ui,sans-serif;padding:28px 20px 40px}
+.wrap{max-width:1150px;margin:0 auto}
+h1{font-size:28px;margin:0 0 4px;letter-spacing:-.5px}
+h1 span{background:linear-gradient(90deg,var(--cy),var(--vi));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mu);font-size:14px;margin-bottom:20px}
+.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:18px}
+.filters label{display:flex;flex-direction:column;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;gap:5px}
+select,button{font-family:inherit;font-size:14px;background:#0E1428;color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:130px}
+select:focus,button:focus{outline:none;border-color:var(--cy);box-shadow:0 0 0 3px #22d3ee33}
+button{cursor:pointer;color:var(--cy);border-color:#22d3ee66;min-width:0}
+button:hover{background:#22d3ee1a}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:0 0 24px #22d3ee0d}
+.kpi .l{font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:.8px}
+.kpi .v{font-size:30px;font-weight:700;margin-top:6px;color:var(--cy);text-shadow:0 0 18px #22d3ee66}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.full{grid-column:1/-1}
+h2{font-size:16px;margin:0 0 4px}
+.hint{font-size:12px;color:var(--mu);margin-bottom:14px}
+.row{display:grid;grid-template-columns:120px 1fr 150px;gap:10px;align-items:center;margin:9px 0;font-size:13px}
+.track{height:14px;background:#0E1428;border-radius:8px;overflow:hidden}
+.bar{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--vi),var(--cy));box-shadow:0 0 12px #22d3ee55;transition:width .4s}
+.low .bar{opacity:.45}
+.meta{color:var(--mu);font-size:12px;text-align:right}
+.meta b{color:var(--tx);font-weight:500}
+.stack{display:flex;height:26px;border-radius:10px;overflow:hidden;background:#0E1428;margin:6px 0 16px}
+.stack div{transition:width .4s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{border-left:3px solid;padding-left:12px}
+.stat .n{font-size:20px;font-weight:700}
+.stat .d{font-size:12px;color:var(--mu)}
+.empty{color:var(--mu);padding:20px 0;text-align:center}
+.foot{color:var(--mu);font-size:12px;margin-top:18px;line-height:1.6}
+@media(max-width:800px){.grid,.kpis,.stats{grid-template-columns:1fr}.row{grid-template-columns:90px 1fr 120px}h1{font-size:22px}}
+</style></head><body><div class="wrap">
+<h1>Vendas <span>Porsche</span></h1>
+<div class="sub">Painel de análise de 100 vendas · filtre para atualizar todos os gráficos</div>
+<div class="filters">
+<label>Estado<select id="state"></select></label>
+<label>Família<select id="fam"></select></label>
+<label>Ano do modelo<select id="year"></select></label>
+<label>Pagamento<select id="pay"></select></label>
+<label>Status<select id="grp"></select></label>
+<button id="clear">Limpar filtros</button>
+</div>
+<div class="kpis">
+<div class="card kpi"><div class="l">Receita total</div><div class="v" id="k1"></div></div>
+<div class="card kpi"><div class="l">Vendas</div><div class="v" id="k2"></div></div>
+<div class="card kpi"><div class="l">Ticket médio</div><div class="v" id="k3"></div></div>
+</div>
+<div class="grid">
+<div class="card"><h2>1. Quais famílias geram mais receita e têm maior ticket médio?</h2><div class="hint">Barra = receita. À direita: vendas e ticket médio.</div><div id="q1"></div></div>
+<div class="card"><h2>2. Como os clientes pagam e o método muda com o valor?</h2><div class="hint">Barra = número de vendas. À direita: ticket médio.</div><div id="q2"></div></div>
+<div class="card full"><h2>3. Quanto da receita foi entregue, está em andamento ou foi cancelada?</h2><div class="hint">Divisão da receita por situação da venda.</div><div id="q3"></div></div>
+</div>
+<div class="foot">Base: 100 vendas da Porsche (dados tratados). Datas não são usadas: 24 registros têm data INVALID. "Em andamento" reúne Pending, In Transit, Shipped e Awaiting. Barras esmaecidas indicam menos de 5 vendas: leia com cautela.</div>
+</div>
+<script>
+const D=[{"id":6,"m":"718 Cayman","f":"718","y":2022,"p":79500.0,"pay":"Credit Card","s":"MA","g":"Entregue"},{"id":7,"m":"911 Turbo S","f":"911","y":2024,"p":235000.0,"pay":"Wire Transfer","s":"WA","g":"Entregue"},{"id":8,"m":"Cayenne Coupe","f":"Cayenne","y":2023,"p":112750.0,"pay":"Financing","s":"TX","g":"Em andamento"},{"id":9,"m":"Macan S","f":"Macan","y":2021,"p":68900.0,"pay":"Cash","s":"CO","g":"Em andamento"},{"id":10,"m":"Taycan 4S","f":"Taycan","y":2024,"p":121000.0,"pay":"Bank Transfer","s":"CA","g":"Entregue"},{"id":11,"m":"Panamera 4","f":"Panamera","y":2023,"p":104500.0,"pay":"Credit Card","s":"FL","g":"Cancelado"},{"id":12,"m":"911 Carrera S","f":"911","y":2020,"p":96300.0,"pay":"Lease","s":"NY","g":"Entregue"},{"id":13,"m":"Cayenne E-Hybrid","f":"Cayenne","y":2022,"p":89750.0,"pay":"Wire Transfer","s":"CA","g":"Em andamento"},{"id":14,"m":"718 Boxster","f":"718","y":2021,"p":73500.0,"pay":"Debit Card","s":"IL","g":"Em andamento"},{"id":15,"m":"Macan GTS","f":"Macan","y":2024,"p":95000.0,"pay":"Financing","s":"AZ","g":"Em andamento"},{"id":16,"m":"Taycan Turbo","f":"Taycan","y":2023,"p":153200.5,"pay":"ACH Payment","s":"TX","g":"Entregue"},{"id":17,"m":"911 GT3","f":"911","y":2024,"p":241000.0,"pay":"Wire Transfer","s":"NV","g":"Em andamento"},{"id":18,"m":"Panamera Turbo S","f":"Panamera","y":2022,"p":132000.0,"pay":"Cash","s":"CA","g":"Entregue"},{"id":19,"m":"Cayenne Turbo GT","f":"Cayenne","y":2024,"p":188000.0,"pay":"Crypto Payment","s":"TX","g":"Em andamento"},{"id":20,"m":"911 Carrera Cabriolet","f":"911","y":2023,"p":127800.0,"pay":"Credit Card","s":"GA","g":"Entregue"},{"id":21,"m":"Macan","f":"Macan","y":2021,"p":58900.0,"pay":"Bank Transfer","s":"FL","g":"Em andamento"},{"id":22,"m":"718 Spyder RS","f":"718","y":2024,"p":164000.0,"pay":"Financing","s":"OR","g":"Em andamento"},{"id":23,"m":"Taycan Cross Turismo","f":"Taycan","y":2023,"p":118500.0,"pay":"Wire Transfer","s":"NC","g":"Entregue"},{"id":24,"m":"Cayenne S","f":"Cayenne","y":2022,"p":91300.0,"pay":"Credit Card","s":"TN","g":"Em andamento"},{"id":25,"m":"911 Targa 4S","f":"911","y":2024,"p":158750.0,"pay":"Lease","s":"MN","g":"Entregue"},{"id":26,"m":"Panamera","f":"Panamera","y":2020,"p":72000.0,"pay":"Bank Transfer","s":"PA","g":"Cancelado"},{"id":27,"m":"Macan Electric","f":"Macan","y":2025,"p":86500.0,"pay":"Wire Transfer","s":"TX","g":"Entregue"},{"id":28,"m":"911 Dakar","f":"911","y":2024,"p":270000.0,"pay":"Cash","s":"UT","g":"Em andamento"},{"id":29,"m":"Taycan GTS","f":"Taycan","y":2023,"p":139000.0,"pay":"Financing","s":"NC","g":"Em andamento"},{"id":30,"m":"Cayenne","f":"Cayenne","y":2021,"p":76800.0,"pay":"Credit Card","s":"MI","g":"Entregue"},{"id":31,"m":"718 Cayman GT4 RS","f":"718","y":2024,"p":173600.0,"pay":"Wire Transfer","s":"OH","g":"Em andamento"},{"id":32,"m":"911 Carrera GTS","f":"911","y":2022,"p":119900.0,"pay":"Cash","s":"IN","g":"Entregue"},{"id":33,"m":"Panamera 4 E-Hybrid","f":"Panamera","y":2023,"p":109250.0,"pay":"Lease","s":"TX","g":"Em andamento"},{"id":34,"m":"Macan T","f":"Macan","y":2022,"p":82000.0,"pay":"Wire Transfer","s":"FL","g":"Entregue"},{"id":35,"m":"Taycan Turbo S","f":"Taycan","y":2025,"p":214000.0,"pay":"Crypto Payment","s":"CA","g":"Em andamento"},{"id":36,"m":"911 Carrera","f":"911","y":2024,"p":124500.0,"pay":"Credit Card","s":"FL","g":"Entregue"},{"id":37,"m":"Cayenne S","f":"Cayenne","y":2023,"p":98200.0,"pay":"Bank Transfer","s":"CA","g":"Em andamento"},{"id":38,"m":"Macan","f":"Macan","y":2022,"p":67500.0,"pay":"Financing","s":"OH","g":"Entregue"},{"id":39,"m":"Taycan","f":"Taycan","y":2025,"p":116900.0,"pay":"Wire Transfer","s":"WI","g":"Em andamento"},{"id":40,"m":"Panamera 4S","f":"Panamera","y":2024,"p":112000.0,"pay":"Cash","s":"MO","g":"Entregue"},{"id":41,"m":"718 Boxster","f":"718","y":2021,"p":74000.0,"pay":"Debit Card","s":"NE","g":"Cancelado"},{"id":42,"m":"911 Turbo","f":"911","y":2024,"p":198300.0,"pay":"Wire Transfer","s":"NM","g":"Em andamento"},{"id":43,"m":"Cayenne Coupe","f":"Cayenne","y":2023,"p":103750.0,"pay":"Wire Transfer","s":"AZ","g":"Em andamento"},{"id":44,"m":"Macan GTS","f":"Macan","y":2024,"p":93600.0,"pay":"Financing","s":"CA","g":"Em andamento"},{"id":45,"m":"Taycan 4S","f":"Taycan","y":2025,"p":129000.0,"pay":"ACH Payment","s":"VA","g":"Em andamento"},{"id":46,"m":"Panamera Turbo","f":"Panamera","y":2022,"p":136000.0,"pay":"Credit Card","s":"CO","g":"Entregue"},{"id":47,"m":"911 GT3 RS","f":"911","y":2024,"p":286500.0,"pay":"Wire Transfer","s":"TX","g":"Em andamento"},{"id":48,"m":"Cayenne E-Hybrid","f":"Cayenne","y":2023,"p":92800.0,"pay":"Lease","s":"CA","g":"Entregue"},{"id":49,"m":"Macan T","f":"Macan","y":2022,"p":72400.0,"pay":"Cash","s":"AZ","g":"Em andamento"},{"id":50,"m":"Taycan Turbo","f":"Taycan","y":2025,"p":158500.0,"pay":"Crypto Payment","s":"GA","g":"Entregue"},{"id":51,"m":"718 Cayman","f":"718","y":2021,"p":69900.0,"pay":"Bank Transfer","s":"CA","g":"Em andamento"},{"id":52,"m":"911 Targa 4","f":"911","y":2024,"p":141250.0,"pay":"Financing","s":"CA","g":"Em andamento"},{"id":53,"m":"Panamera","f":"Panamera","y":2020,"p":71500.0,"pay":"Wire Transfer","s":"OK","g":"Entregue"},{"id":54,"m":"Cayenne Turbo","f":"Cayenne","y":2023,"p":146800.0,"pay":"Credit Card","s":"KS","g":"Em andamento"},{"id":55,"m":"Macan Electric","f":"Macan","y":2025,"p":89700.0,"pay":"Lease","s":"LA","g":"Entregue"},{"id":56,"m":"911 Carrera S","f":"911","y":2022,"p":104600.0,"pay":"Bank Transfer","s":"HI","g":"Cancelado"},{"id":57,"m":"Taycan GTS","f":"Taycan","y":2024,"p":142000.0,"pay":"Wire Transfer","s":"CA","g":"Entregue"},{"id":58,"m":"Cayenne","f":"Cayenne","y":2021,"p":78400.0,"pay":"Cash","s":"NV","g":"Em andamento"},{"id":59,"m":"718 Spyder RS","f":"718","y":2025,"p":169000.0,"pay":"Financing","s":"KY","g":"Em andamento"},{"id":60,"m":"911 Dakar","f":"911","y":2024,"p":268900.0,"pay":"Credit Card","s":"CA","g":"Entregue"},{"id":61,"m":"Panamera 4","f":"Panamera","y":2023,"p":101300.0,"pay":"Wire Transfer","s":"TX","g":"Em andamento"},{"id":62,"m":"Macan S","f":"Macan","y":2021,"p":66750.0,"pay":"Cash","s":"MO","g":"Entregue"},{"id":63,"m":"Taycan Cross Turismo","f":"Taycan","y":2024,"p":127900.0,"pay":"Lease","s":"PA","g":"Em andamento"},{"id":64,"m":"Cayenne Turbo GT","f":"Cayenne","y":2025,"p":200000.0,"pay":"Wire Transfer","s":"OH","g":"Entregue"},{"id":65,"m":"911 Carrera Cabriolet","f":"911","y":2023,"p":132000.0,"pay":"Crypto Payment","s":"AK","g":"Em andamento"},{"id":66,"m":"718 Cayman GT4 RS","f":"718","y":2024,"p":176400.0,"pay":"Credit Card","s":"TX","g":"Entregue"},{"id":67,"m":"Panamera 4 E-Hybrid","f":"Panamera","y":2022,"p":108500.0,"pay":"Bank Transfer","s":"NJ","g":"Cancelado"},{"id":68,"m":"Macan","f":"Macan","y":2021,"p":59000.0,"pay":"Financing","s":"NC","g":"Em andamento"},{"id":69,"m":"Taycan Turbo S","f":"Taycan","y":2025,"p":218000.0,"pay":"Wire Transfer","s":"NE","g":"Em andamento"},{"id":70,"m":"Cayenne S","f":"Cayenne","y":2024,"p":99950.0,"pay":"Debit Card","s":"NJ","g":"Entregue"},{"id":71,"m":"911 Carrera GTS","f":"911","y":2024,"p":121750.0,"pay":"Credit Card","s":"AZ","g":"Entregue"},{"id":72,"m":"718 Boxster GTS","f":"718","y":2023,"p":91500.0,"pay":"Lease","s":"NV","g":"Em andamento"},{"id":73,"m":"Panamera Turbo S","f":"Panamera","y":2022,"p":134000.0,"pay":"Wire Transfer","s":"NY","g":"Em andamento"},{"id":74,"m":"Macan GTS","f":"Macan","y":2024,"p":96800.0,"pay":"ACH Payment","s":"NC","g":"Entregue"},{"id":75,"m":"Taycan 4S","f":"Taycan","y":2025,"p":131600.0,"pay":"Wire Transfer","s":"TX","g":"Em andamento"},{"id":76,"m":"Cayenne E-Hybrid","f":"Cayenne","y":2023,"p":94300.0,"pay":"Cash","s":"WI","g":"Entregue"},{"id":77,"m":"911 Turbo S","f":"911","y":2025,"p":242000.0,"pay":"Crypto Payment","s":"TX","g":"Em andamento"},{"id":78,"m":"718 Cayman S","f":"718","y":2022,"p":82750.0,"pay":"Credit Card","s":"OH","g":"Cancelado"},{"id":79,"m":"Macan Electric","f":"Macan","y":2026,"p":91300.0,"pay":"Wire Transfer","s":"CA","g":"Entregue"},{"id":80,"m":"Panamera","f":"Panamera","y":2021,"p":79900.0,"pay":"Financing","s":"TX","g":"Em andamento"},{"id":81,"m":"Cayenne Coupe","f":"Cayenne","y":2024,"p":111000.0,"pay":"Bank Transfer","s":"TX","g":"Em andamento"},{"id":82,"m":"911 Targa 4S","f":"911","y":2023,"p":156500.0,"pay":"Cash","s":"VA","g":"Entregue"},{"id":83,"m":"Taycan","f":"Taycan","y":2025,"p":119900.0,"pay":"Lease","s":"AZ","g":"Em andamento"},{"id":84,"m":"Macan T","f":"Macan","y":2022,"p":73200.0,"pay":"Wire Transfer","s":"VA","g":"Entregue"},{"id":85,"m":"911 GT3","f":"911","y":2024,"p":224000.0,"pay":"Wire Transfer","s":"ID","g":"Em andamento"},{"id":86,"m":"911 Carrera","f":"911","y":2024,"p":126900.0,"pay":"Credit Card","s":"FL","g":"Entregue"},{"id":87,"m":"Cayenne","f":"Cayenne","y":2023,"p":84500.0,"pay":"Bank Transfer","s":"CA","g":"Em andamento"},{"id":88,"m":"Macan S","f":"Macan","y":2022,"p":69800.0,"pay":"Financing","s":"FL","g":"Entregue"},{"id":89,"m":"Taycan 4S","f":"Taycan","y":2025,"p":132700.0,"pay":"Wire Transfer","s":"CO","g":"Em andamento"},{"id":90,"m":"Panamera","f":"Panamera","y":2021,"p":81000.0,"pay":"Cash","s":"TX","g":"Entregue"},{"id":91,"m":"718 Cayman","f":"718","y":2023,"p":78900.0,"pay":"Debit Card","s":"WA","g":"Cancelado"},{"id":92,"m":"911 Turbo S","f":"911","y":2026,"p":249300.0,"pay":"Wire Transfer","s":"MA","g":"Em andamento"},{"id":93,"m":"Cayenne Coupe","f":"Cayenne","y":2024,"p":108750.0,"pay":"Wire Transfer","s":"AZ","g":"Em andamento"},{"id":94,"m":"Macan Electric","f":"Macan","y":2026,"p":92600.0,"pay":"Financing","s":"IL","g":"Em andamento"},{"id":95,"m":"Taycan Turbo","f":"Taycan","y":2025,"p":164000.0,"pay":"ACH Payment","s":"TX","g":"Em andamento"},{"id":96,"m":"Panamera 4S","f":"Panamera","y":2024,"p":119000.0,"pay":"Credit Card","s":"CA","g":"Entregue"},{"id":97,"m":"911 GT3","f":"911","y":2026,"p":232500.0,"pay":"Wire Transfer","s":"NV","g":"Em andamento"},{"id":98,"m":"Cayenne E-Hybrid","f":"Cayenne","y":2023,"p":96800.0,"pay":"Lease","s":"NC","g":"Entregue"},{"id":99,"m":"Macan T","f":"Macan","y":2022,"p":74400.0,"pay":"Cash","s":"AZ","g":"Em andamento"},{"id":100,"m":"Taycan GTS","f":"Taycan","y":2025,"p":148500.0,"pay":"Crypto Payment","s":"GA","g":"Entregue"},{"id":101,"m":"718 Boxster","f":"718","y":2021,"p":71900.0,"pay":"Bank Transfer","s":"CA","g":"Em andamento"},{"id":102,"m":"911 Targa 4","f":"911","y":2024,"p":143250.0,"pay":"Financing","s":"CA","g":"Em andamento"},{"id":103,"m":"Panamera Turbo","f":"Panamera","y":2020,"p":137500.0,"pay":"Wire Transfer","s":"OK","g":"Entregue"},{"id":104,"m":"Cayenne Turbo GT","f":"Cayenne","y":2025,"p":204800.0,"pay":"Credit Card","s":"KS","g":"Em andamento"},{"id":105,"m":"911 Dakar","f":"911","y":2024,"p":271700.0,"pay":"Lease","s":"LA","g":"Entregue"}];
+const IDS=['state','fam','year','pay','grp'], KEY={state:'s',fam:'f',year:'y',pay:'pay',grp:'g'};
+const LAB={state:'Todos',fam:'Todas',year:'Todos',pay:'Todos',grp:'Todos'};
+const COL={'Entregue':'var(--gr)','Em andamento':'var(--am)','Cancelado':'var(--ro)'};
+const F={};
+const $=id=>document.getElementById(id);
+const money=v=>v>=1e6?'US$ '+(v/1e6).toFixed(2).replace('.',',')+' mi':'US$ '+Math.round(v/1e3)+' mil';
+const pct=v=>(v*100).toFixed(1).replace('.',',')+'%';
+IDS.forEach(id=>{
+  const vals=[...new Set(D.map(r=>r[KEY[id]]))].sort((a,b)=>String(a).localeCompare(String(b),'pt',{numeric:true}));
+  $(id).innerHTML='<option value="">'+LAB[id]+'</option>'+vals.map(v=>`<option>${v}</option>`).join('');
+  $(id).onchange=e=>{F[id]=e.target.value;render()};
+});
+$('clear').onclick=()=>{IDS.forEach(id=>{F[id]='';$(id).value=''});render()};
+function group(rows,k){const m={};rows.forEach(r=>{(m[r[k]]=m[r[k]]||{n:0,s:0});m[r[k]].n++;m[r[k]].s+=r.p});return Object.entries(m).map(([name,o])=>({name,n:o.n,s:o.s,avg:o.s/o.n}))}
+function render(){
+  const rows=D.filter(r=>IDS.every(id=>!F[id]||String(r[KEY[id]])===F[id]));
+  const tot=rows.reduce((a,r)=>a+r.p,0);
+  $('k1').textContent=rows.length?money(tot):'-';
+  $('k2').textContent=rows.length;
+  $('k3').textContent=rows.length?money(tot/rows.length):'-';
+  if(!rows.length){['q1','q2','q3'].forEach(q=>$(q).innerHTML='<div class="empty">Nenhuma venda com esses filtros.</div>');return}
+  const f=group(rows,'f').sort((a,b)=>b.s-a.s), mx1=f[0].s;
+  $('q1').innerHTML=f.map(x=>`<div class="row ${x.n<5?'low':''}"><span>${x.name}</span><div class="track"><div class="bar" style="width:${x.s/mx1*100}%"></div></div><span class="meta"><b>${money(x.s)}</b><br>${x.n} vendas · ticket ${money(x.avg)}</span></div>`).join('');
+  const p=group(rows,'pay').sort((a,b)=>b.n-a.n||b.s-a.s), mx2=p[0].n;
+  $('q2').innerHTML=p.map(x=>`<div class="row ${x.n<5?'low':''}"><span>${x.name}</span><div class="track"><div class="bar" style="width:${x.n/mx2*100}%"></div></div><span class="meta"><b>${x.n} vendas</b><br>ticket ${money(x.avg)}</span></div>`).join('');
+  const g=['Entregue','Em andamento','Cancelado'].map(n=>{const r=rows.filter(x=>x.g===n);const s=r.reduce((a,x)=>a+x.p,0);return{name:n,n:r.length,s}});
+  $('q3').innerHTML='<div class="stack">'+g.map(x=>`<div style="width:${x.s/tot*100}%;background:${COL[x.name]}" title="${x.name}"></div>`).join('')+'</div><div class="stats">'+g.map(x=>`<div class="stat" style="border-color:${COL[x.name]}"><div class="d">${x.name}</div><div class="n">${money(x.s)}</div><div class="d">${pct(x.s/tot)} da receita · ${x.n} vendas</div></div>`).join('')+'</div>';
+}
+render();
+</script></body></html>
